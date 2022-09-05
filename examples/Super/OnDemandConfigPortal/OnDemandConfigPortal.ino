@@ -20,6 +20,7 @@ unsigned long mtime = 0;
 
 
 WiFiManager wm;
+// WiFiManager wm(Serial); // pass in debug out io stream/print
 
 
 // TEST OPTION FLAGS
@@ -104,9 +105,9 @@ void setup() {
   Serial.println("[ERROR]  TEST");
   Serial.println("[INFORMATION] TEST");  
 
+  wm.debugPlatformInfo(); // debug info about eso platform
+  // wm.setDebugOutput(true, "[WM] "); // enable debugging, optional custom log prefix
 
-  wm.setDebugOutput(true);
-  wm.debugPlatformInfo();
 
   //reset settings - for testing
   // wm.resetSettings();
@@ -216,6 +217,7 @@ void setup() {
 
   // set country
   // setting wifi country seems to improve OSX soft ap connectivity, 
+  // setting country also seems to improve sta connection times for some reason
   // may help others as well, default is CN which has different channels
 
   // wm.setCountry("US"); // crashing on esp32 2.0
@@ -278,6 +280,9 @@ void setup() {
   // use autoconnect, but prevent configportal from auto starting
   // wm.setEnableConfigPortal(false);
 
+  // force esp to store channel and bssid for faster connections (theoretically 2-3x faster connections)
+  wm.setFastConnectMode(true);
+
   wifiInfo();
 
   // to preload autoconnect with credentials
@@ -308,13 +313,13 @@ void setup() {
 }
 
 void wifiInfo(){
-  // can contain gargbage on esp32 if wifi is not ready yet
-  Serial.println("[WIFI] WIFI INFO DEBUG");
-  // WiFi.printDiag(Serial);
-  Serial.println("[WIFI] SAVED: " + (String)(wm.getWiFiIsSaved() ? "YES" : "NO"));
-  Serial.println("[WIFI] SSID: " + (String)wm.getWiFiSSID());
-  Serial.println("[WIFI] PASS: " + (String)wm.getWiFiPass());
-  Serial.println("[WIFI] HOSTNAME: " + (String)WiFi.getHostname());
+  Serial.println("\nWIFI INFO\n**************");
+  WiFi.printDiag(Serial);
+  Serial.print("\nSAVED: ");
+  Serial.println((String)wm.getWiFiIsSaved() ? "YES" : "NO");
+  Serial.println("SSID: " + (String)wm.getWiFiSSID());
+  Serial.println("PASS: " + (String)wm.getWiFiPass());
+  Serial.println("**************\n");
 }
 
 void loop() {
@@ -357,7 +362,7 @@ void loop() {
   }
 
   // every 10 seconds
-  if(millis()-mtime > 10000 ){
+  if(millis()-mtime > 30000 ){
     if(WiFi.status() == WL_CONNECTED){
       getTime();
     }
